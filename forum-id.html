@@ -56,9 +56,7 @@
         import { getFirestore, collection, addDoc, onSnapshot, query, where, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-        // ========================================================
-        // GANTI DENGAN FIREBASE CONFIG ANDA
-        // ========================================================
+        // Firebase Configuration
         const firebaseConfig = {
           apiKey: "AIzaSyDlaaNbqCYsNDZtawY9n42qYrQL3vtyiRw",
           authDomain: "forum-app-id.firebaseapp.com",
@@ -67,25 +65,29 @@
           messagingSenderId: "1006757478713",
           appId: "1:1006757478713:web:c2b489ec6ff904ac4fa8e8"
         };
-        // ========================================================
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const auth = getAuth(app);
 
-        // Membaca Tautan (URL)
+        // Membaca Parameter Ruang dari URL & Mengunci Bahasa ke 'id'
         const urlParams = new URLSearchParams(window.location.search);
         const ruangSaatIni = urlParams.get('ruang') || 'umum';
-        const bahasaSaatIni = urlParams.get('lang') || 'id';
+        const bahasaSaatIni = 'id'; // Bahasa dikunci permanen ke Indonesia
 
-        // Menerjemahkan UI (Antarmuka)
-        const ui = {
-            'id': { kembali: 'Kembali', masuk: 'Masuk sebagai:', placeholder: 'Tulis diskusi atau pertanyaan Anda di sini...', kirim: 'Kirim Postingan', loading: 'Memuat diskusi...', kosong: 'Belum ada obrolan. Jadilah yang pertama!', mintaNama: 'Siapa nama Anda? (Nama ini akan tampil di forum)' },
-            'en': { kembali: 'Back', masuk: 'Logged in as:', placeholder: 'Write your discussion or question here...', kirim: 'Post', loading: 'Loading discussions...', kosong: 'No discussions yet. Be the first to post!', mintaNama: 'What is your name? (This will be shown in the forum)' }
+        // Teks Antarmuka Bahasa Indonesia
+        const teks = {
+            kembali: 'Kembali',
+            masuk: 'Masuk sebagai:',
+            placeholder: 'Tulis diskusi atau pertanyaan Anda di sini...',
+            kirim: 'Kirim Postingan',
+            loading: 'Memuat diskusi...',
+            kosong: 'Belum ada obrolan. Jadilah yang pertama!',
+            mintaNama: 'Siapa nama Anda? (Nama ini akan tampil di forum)'
         };
 
-        const teks = ui[bahasaSaatIni];
-        document.getElementById('html-tag').lang = bahasaSaatIni === 'en' ? 'en-US' : 'id-ID';
+        // Mengatur Elemen UI
+        document.getElementById('html-tag').lang = 'id-ID';
         document.getElementById('judul-ruang').innerText = "# " + ruangSaatIni.replace(/-/g, ' ');
         document.getElementById('txt-kembali').innerText = teks.kembali;
         document.getElementById('txt-masuk-sebagai').innerText = teks.masuk;
@@ -100,17 +102,17 @@
         }
 
         onAuthStateChanged(auth, (user) => {
-            if (!user) signInAnonymously(auth); // Otomatis login di latar belakang
+            if (!user) signInAnonymously(auth);
         });
 
-        // Fitur Format Waktu Otomatis
+        // Format Waktu
         function formatWaktu(timestamp) {
             if (!timestamp) return 'Baru saja';
             const date = timestamp.toDate();
-            return new Intl.DateTimeFormat(navigator.language, { dateStyle: 'medium', timeStyle: 'short' }).format(date);
+            return new Intl.DateTimeFormat('id-ID', { dateStyle: 'medium', timeStyle: 'short' }).format(date);
         }
 
-        // Fitur Mengirim Postingan
+        // Mengirim Postingan
         const btnPost = document.getElementById('btn-post');
         const inputPost = document.getElementById('input-post');
 
@@ -118,7 +120,6 @@
             const isiPesan = inputPost.value.trim();
             if (!isiPesan) return;
 
-            // Meminta nama jika belum punya
             if (!namaUser) {
                 const inputNama = prompt(teks.mintaNama);
                 if (!inputNama || inputNama.trim() === "") return;
@@ -131,9 +132,8 @@
             btnPost.innerText = "...";
 
             try {
-                // Simpan ke Firestore
                 await addDoc(collection(db, "postingan"), {
-                    ruang: ruangSaatIni, // INI KUNCI AGAR TIDAK TERCAMPUR
+                    ruang: ruangSaatIni,
                     penulis: namaUser,
                     teks: isiPesan,
                     waktu: serverTimestamp()
@@ -148,10 +148,8 @@
             }
         });
 
-        // Fitur Memuat Obrolan Secara Real-Time (Khusus ruang ini saja)
+        // Memuat Obrolan Real-Time
         const feedPostingan = document.getElementById('feed-postingan');
-        
-        // Query: Ambil dari 'postingan' DI MANA ruang == ruangSaatIni
         const q = query(collection(db, "postingan"), where("ruang", "==", ruangSaatIni), orderBy("waktu", "desc"));
         
         onSnapshot(q, (snapshot) => {
