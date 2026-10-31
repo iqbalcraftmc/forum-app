@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="id-ID">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pilih Ruang Forum</title>
+    <!-- Mengambil gaya desain (Tailwind) langsung dari internet -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: system-ui, -apple-system, sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
+
+    <!-- Kotak Utama Dashboard -->
+    <div class="max-w-md w-full bg-white rounded-3xl shadow-xl p-8 text-center transform transition duration-500 hover:scale-[1.02]">
+        
+        <!-- Judul -->
+        <h1 class="text-3xl font-extrabold text-gray-800 mb-2">Selamat Datang</h1>
+        <p class="text-gray-500 mb-8 text-sm">
+            Silakan pilih ruangan diskusi Anda<br>
+            <span class="italic text-xs">Please choose your discussion room</span>
+        </p>
+
+        <div class="space-y-4">
+            
+            <!-- Tombol Ruang Global -->
+            <!-- Nanti ini akan diarahkan ke file forum-global.html -->
+            <a href="forum-global.html" class="block w-full p-4 border-2 border-blue-50 rounded-2xl hover:border-blue-500 hover:bg-blue-50 transition-all duration-300 text-left group cursor-pointer shadow-sm hover:shadow-md">
+                <div class="flex items-center space-x-4">
+                    <div class="text-5xl">🌍</div>
+                    <div>
+                        <h2 class="text-xl font-bold text-gray-800 group-hover:text-blue-700">Global Forum</h2>
+                        <p class="text-sm text-gray-500 font-medium">English language only</p>
+                    </div>
+                </div>
+            </a>
+
+            <!-- Tombol Ruang Indonesia -->
+            <!-- Nanti ini akan diarahkan ke file forum-id.html -->
+            <a href="forum-id.html" class="block w-full p-4 border-2 border-red-50 rounded-2xl hover:border-red-500 hover:bg-red-50 transition-all duration-300 text-left group cursor-pointer shadow-sm hover:shadow-md">
+                <div class="flex items-center space-x-4">
+                    <div class="text-5xl">🇮🇩</div>
+                    <div>
+                        <h2 class="text-xl font-bold text-gray-800 group-hover:text-red-700">Forum Indonesia</h2>
+                        <p class="text-sm text-gray-500 font-medium">Khusus bahasa Indonesia</p>
+                    </div>
+                </div>
+            </a>
+
+        </div>
+
+        <div class="mt-8 text-xs text-gray-400">
+            Powered by GitHub & Cloudflare Pages
+        </div>
+    </div>
+
+</body>
+</html>
+  
