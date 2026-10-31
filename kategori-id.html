@@ -9,7 +9,6 @@
         body { font-family: system-ui, -apple-system, sans-serif; }
         @keyframes scaleIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
         .modal-animasi { animation: scaleIn 0.2s ease-out forwards; }
-        /* Membatasi teks deskripsi maksimal 2 baris agar kartu tetap rapi */
         .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
     </style>
 </head>
@@ -74,18 +73,14 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // ========================================================
-        // HAPUS KODE DI BAWAH INI DAN GANTI DENGAN FIREBASE CONFIG ANDA
-        // ========================================================
         const firebaseConfig = {
-  apiKey: "AIzaSyDlaaNbqCYsNDZtawY9n42qYrQL3vtyiRw",
-  authDomain: "forum-app-id.firebaseapp.com",
-  projectId: "forum-app-id",
-  storageBucket: "forum-app-id.firebasestorage.app",
-  messagingSenderId: "1006757478713",
-  appId: "1:1006757478713:web:c2b489ec6ff904ac4fa8e8"
-};
-        // ========================================================
+          apiKey: "AIzaSyDlaaNbqCYsNDZtawY9n42qYrQL3vtyiRw",
+          authDomain: "forum-app-id.firebaseapp.com",
+          projectId: "forum-app-id",
+          storageBucket: "forum-app-id.firebasestorage.app",
+          messagingSenderId: "1006757478713",
+          appId: "1:1006757478713:web:c2b489ec6ff904ac4fa8e8"
+        };
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
@@ -129,7 +124,6 @@
             btnSimpan.innerText = "Menyimpan...";
 
             try {
-                // Menyimpan Nama DAN Deskripsi
                 await addDoc(collection(db, "kategori_id"), {
                     nama: nama,
                     deskripsi: deskripsi || "Ruang obrolan komunitas.", 
@@ -137,7 +131,6 @@
                     waktu: serverTimestamp()
                 });
                 
-                // Tutup & Kosongkan form
                 modal.classList.add('hidden');
                 modal.classList.remove('flex');
                 inputNama.value = '';
@@ -156,10 +149,16 @@
         onSnapshot(q, (snapshot) => {
             daftarKategori.innerHTML = ''; 
             
+            if (snapshot.empty) {
+                daftarKategori.innerHTML = `<div class="col-span-1 text-gray-400 text-sm text-center py-4">Belum ada saluran. Buatlah yang pertama!</div>`;
+                return;
+            }
+
             snapshot.forEach((doc) => {
                 const data = doc.data();
+                // Mengarah langsung ke forum-id.html
                 const htmlSaluran = `
-                    <a href="forum.html?ruang=${data.slug}" class="p-5 bg-white border border-gray-200 rounded-2xl hover:border-red-500 hover:shadow-md transition-all group cursor-pointer flex flex-col justify-between min-h-[140px]">
+                    <a href="forum-id.html?ruang=${data.slug}" class="p-5 bg-white border border-gray-200 rounded-2xl hover:border-red-500 hover:shadow-md transition-all group cursor-pointer flex flex-col justify-between min-h-[140px]">
                         <div>
                             <h2 class="text-lg font-bold text-gray-800 group-hover:text-red-600 mb-1 truncate"># ${data.nama}</h2>
                             <p class="text-sm text-gray-500 line-clamp-2">${data.deskripsi || 'Ruang obrolan komunitas.'}</p>
@@ -175,5 +174,4 @@
         });
     </script>
 </body>
-  </html>
-  
+</html>
