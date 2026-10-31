@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="id-ID" id="html-tag">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ruang Diskusi</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: system-ui, -apple-system, sans-serif; }
+        /* Animasi muncul (fade in) untuk pesan baru */
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        .pesan-baru { animation: fadeIn 0.3s ease-out forwards; }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen p-4 md:p-8">
+
+    <div class="max-w-3xl mx-auto">
+        
+        <!-- Header Navigasi -->
+        <div class="flex items-center justify-between mb-6">
+            <button onclick="window.history.back()" class="text-gray-500 hover:text-blue-600 font-medium transition-colors">
+                <span class="mr-1">←</span> <span id="txt-kembali">Kembali</span>
+            </button>
+            <div class="text-right">
+                <div class="text-xs text-gray-500" id="txt-masuk-sebagai">Masuk sebagai:</div>
+                <div id="nama-pengguna" class="font-bold text-gray-800">Anonim</div>
+            </div>
+        </div>
+
+        <!-- Judul Ruangan -->
+        <div class="mb-6">
+            <h1 class="text-3xl font-extrabold text-gray-800 capitalize" id="judul-ruang">Memuat...</h1>
+            <p class="text-gray-500 text-sm" id="txt-subjudul">Sedang berada di ruangan ini.</p>
+        </div>
+
+        <!-- Kotak Tulis Postingan -->
+        <div class="bg-white rounded-3xl shadow-md p-4 mb-8">
+            <textarea id="input-post" rows="3" class="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none text-gray-700" placeholder="Tulis diskusi atau pertanyaan Anda di sini..."></textarea>
+            <div class="flex justify-end mt-3">
+                <button id="btn-post" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-xl transition-colors shadow-sm">
+                    Kirim Postingan
+                </button>
+            </div>
+        </div>
+
+        <!-- Daftar Obrolan (Feed) -->
+        <div id="feed-postingan" class="space-y-6">
+            <div class="text-center py-10 text-gray-400" id="txt-loading">Memuat diskusi...</div>
+        </div>
+
+    </div>
+
+    <!-- Script Firebase (Versi Modular) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, where, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+        // ========================================================
+        // GANTI DENGAN FIREBASE CONFIG ANDA
+        // ========================================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyContohKodeAnda...",
+            authDomain: "forum-app-anda.firebaseapp.com",
+            projectId: "forum-app-anda",
+            storageBucket: "forum-app-anda.appspot.com",
+            messagingSenderId: "123456789",
+            appId: "1:123456:web:abcdefg"
+        };
+        // ========================================================
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        // Membaca Tautan (URL)
+        const urlParams = new URLSearchParams(window.location.search);
+        const ruangSaatIni = urlParams.get('ruang') || 'umum';
+        const bahasaSaatIni = urlParams.get('lang') || 'id';
+
+        // Menerjemahkan UI (Antarmuka)
+        const ui = {
+            'id': { kembali: 'Kembali', masuk: 'Masuk sebagai:', placeholder: 'Tulis diskusi atau pertanyaan Anda di sini...', kirim: 'Kirim Postingan', loading: 'Memuat diskusi...', kosong: 'Belum ada obrolan. Jadilah yang pertama!', mintaNama: 'Siapa nama Anda? (Nama ini akan tampil di forum)' },
+            'en': { kembali: 'Back', masuk: 'Logged in as:', placeholder: 'Write your discussion or question here...', kirim: 'Post', loading: 'Loading discussions...', kosong: 'No discussions yet. Be the first to post!', mintaNama: 'What is your name? (This will be shown in the forum)' }
+        };
+
+        const teks = ui[bahasaSaatIni];
+        document.getElementById('html-tag').lang = bahasaSaatIni === 'en' ? 'en-US' : 'id-ID';
+        document.getElementById('judul-ruang').innerText = "# " + ruangSaatIni.replace(/-/g, ' ');
+        document.getElementById('txt-kembali').innerText = teks.kembali;
+        document.getElementById('txt-masuk-sebagai').innerText = teks.masuk;
+        document.getElementById('input-post').placeholder = teks.placeholder;
+        document.getElementById('btn-post').innerText = teks.kirim;
+        document.getElementById('txt-loading').innerText = teks.loading;
+
+        // Sistem Pengguna (Nama & Login Anonim)
+        let namaUser = localStorage.getItem('nama_forum') || null;
+        if (namaUser) {
+            document.getElementById('nama-pengguna').innerText = namaUser;
+        }
+
+        onAuthStateChanged(auth, (user) => {
+            if (!user) signInAnonymously(auth); // Otomatis login di latar belakang
+        });
+
+        // Fitur Format Waktu Otomatis
+        function formatWaktu(timestamp) {
+            if (!timestamp) return 'Baru saja';
+            const date = timestamp.toDate();
+            return new Intl.DateTimeFormat(navigator.language, { dateStyle: 'medium', timeStyle: 'short' }).format(date);
+        }
+
+        // Fitur Mengirim Postingan
+        const btnPost = document.getElementById('btn-post');
+        const inputPost = document.getElementById('input-post');
+
+        btnPost.addEventListener('click', async () => {
+            const isiPesan = inputPost.value.trim();
+            if (!isiPesan) return;
+
+            // Meminta nama jika belum punya
+            if (!namaUser) {
+                const inputNama = prompt(teks.mintaNama);
+                if (!inputNama || inputNama.trim() === "") return;
+                namaUser = inputNama.trim();
+                localStorage.setItem('nama_forum', namaUser);
+                document.getElementById('nama-pengguna').innerText = namaUser;
+            }
+
+            btnPost.disabled = true;
+            btnPost.innerText = "...";
+
+            try {
+                // Simpan ke Firestore
+                await addDoc(collection(db, "postingan"), {
+                    ruang: ruangSaatIni, // INI KUNCI AGAR TIDAK TERCAMPUR
+                    penulis: namaUser,
+                    teks: isiPesan,
+                    waktu: serverTimestamp()
+                });
+                inputPost.value = '';
+            } catch (error) {
+                console.error("Error:", error);
+                alert("Gagal mengirim postingan.");
+            } finally {
+                btnPost.disabled = false;
+                btnPost.innerText = teks.kirim;
+            }
+        });
+
+        // Fitur Memuat Obrolan Secara Real-Time (Khusus ruang ini saja)
+        const feedPostingan = document.getElementById('feed-postingan');
+        
+        // Query: Ambil dari 'postingan' DI MANA ruang == ruangSaatIni
+        const q = query(collection(db, "postingan"), where("ruang", "==", ruangSaatIni), orderBy("waktu", "desc"));
+        
+        onSnapshot(q, (snapshot) => {
+            feedPostingan.innerHTML = '';
+            
+            if (snapshot.empty) {
+                feedPostingan.innerHTML = `<div class="text-center py-10 text-gray-400">${teks.kosong}</div>`;
+                return;
+            }
+
+            snapshot.forEach((doc) => {
+                const data = doc.data();
+                const htmlPost = `
+                    <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 pesan-baru">
+                        <div class="flex justify-between items-center mb-2">
+                            <div class="font-bold text-gray-800">${data.penulis}</div>
+                            <div class="text-xs text-gray-400">${formatWaktu(data.waktu)}</div>
+                        </div>
+                        <p class="text-gray-700 whitespace-pre-wrap">${data.teks}</p>
+                    </div>
+                `;
+                feedPostingan.insertAdjacentHTML('beforeend', htmlPost);
+            });
+        });
+    </script>
+</body>
+</html>
