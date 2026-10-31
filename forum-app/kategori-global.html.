@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Discussion Channels - Global Forum</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: system-ui, -apple-system, sans-serif; }
+        @keyframes scaleIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        .modal-animasi { animation: scaleIn 0.2s ease-out forwards; }
+        .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen p-4 md:p-8">
+
+    <div class="max-w-3xl mx-auto bg-white rounded-3xl shadow-xl p-6 md:p-10">
+        
+        <a href="index.html" class="inline-flex items-center text-sm font-medium text-gray-500 hover:text-blue-600 mb-6 transition-colors">
+            <span class="mr-2">←</span> Back to Dashboard
+        </a>
+
+        <h1 class="text-3xl font-extrabold text-gray-800 mb-2">Discussion Channels 🌍</h1>
+        <p class="text-gray-500 mb-8">Choose an existing room, or create a new topic channel!</p>
+
+        <!-- GRID DAFTAR SALURAN -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            
+            <!-- Tombol Buat Saluran -->
+            <button id="btn-buka-modal" class="p-6 border-2 border-dashed border-gray-300 rounded-2xl hover:border-blue-500 hover:bg-blue-50 hover:text-blue-600 transition-all group flex flex-col items-center justify-center text-gray-400 min-h-[140px] shadow-sm cursor-pointer">
+                <div class="text-4xl mb-2 font-light group-hover:scale-110 transition-transform">+</div>
+                <div class="font-bold text-sm">Create New Channel</div>
+            </button>
+
+            <!-- Wadah Saluran Dinamis -->
+            <div id="daftar-kategori" class="contents">
+                <div class="col-span-1 flex items-center justify-center text-gray-400 text-sm">Loading data...</div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- KOTAK POP-UP (PENGATURAN BUAT SALURAN) -->
+    <div id="modal-buat" class="fixed inset-0 bg-gray-900 bg-opacity-60 hidden items-center justify-center z-50 p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-3xl p-6 w-full max-w-md modal-animasi shadow-2xl">
+            <h3 class="text-2xl font-bold text-gray-800 mb-1">Create Channel</h3>
+            <p class="text-xs text-gray-500 mb-6">Set up a topic for this new discussion room.</p>
+            
+            <!-- Input Nama Saluran -->
+            <div class="mb-4">
+                <label class="block text-sm font-bold text-gray-700 mb-2">Channel Name</label>
+                <input type="text" id="input-nama" placeholder="e.g. Anime Lovers" class="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800 font-medium" maxlength="30">
+            </div>
+
+            <!-- Input Deskripsi Saluran -->
+            <div class="mb-8">
+                <label class="block text-sm font-bold text-gray-700 mb-2">Topic Description</label>
+                <textarea id="input-deskripsi" placeholder="What is this channel about?" rows="2" class="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700 text-sm resize-none" maxlength="80"></textarea>
+            </div>
+            
+            <!-- Tombol Aksi -->
+            <div class="flex justify-end gap-3 border-t border-gray-100 pt-4">
+                <button id="btn-batal" class="px-5 py-2.5 rounded-xl font-medium text-gray-600 hover:bg-gray-100 transition-colors">Cancel</button>
+                <button id="btn-simpan" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-2.5 rounded-xl transition-colors shadow-md flex items-center">
+                    Save Channel
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script Firebase -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        // ========================================================
+        // HAPUS KODE DI BAWAH INI DAN GANTI DENGAN FIREBASE CONFIG ANDA
+        // ========================================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyContohKodeAnda...",
+            authDomain: "forum-app-anda.firebaseapp.com",
+            projectId: "forum-app-anda",
+            storageBucket: "forum-app-anda.appspot.com",
+            messagingSenderId: "123456789",
+            appId: "1:123456:web:abcdefg"
+        };
+        // ========================================================
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        const modal = document.getElementById('modal-buat');
+        const btnBukaModal = document.getElementById('btn-buka-modal');
+        const btnBatal = document.getElementById('btn-batal');
+        const btnSimpan = document.getElementById('btn-simpan');
+        const inputNama = document.getElementById('input-nama');
+        const inputDeskripsi = document.getElementById('input-deskripsi');
+        const daftarKategori = document.getElementById('daftar-kategori');
+
+        btnBukaModal.addEventListener('click', () => {
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            inputNama.focus();
+        });
+
+        btnBatal.addEventListener('click', () => {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            inputNama.value = '';
+            inputDeskripsi.value = '';
+        });
+
+        function buatSlug(teks) {
+            return teks.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-');
+        }
+
+        btnSimpan.addEventListener('click', async () => {
+            const nama = inputNama.value.trim();
+            const deskripsi = inputDeskripsi.value.trim();
+
+            if (!nama) return alert('Channel name cannot be empty!');
+            
+            const slug = buatSlug(nama);
+            btnSimpan.disabled = true;
+            btnSimpan.innerText = "Saving...";
+
+            try {
+                // Simpan ke kategori_en (Versi Global)
+                await addDoc(collection(db, "kategori_en"), {
+                    nama: nama,
+                    deskripsi: deskripsi || "Community discussion room.",
+                    slug: slug,
+                    waktu: serverTimestamp()
+                });
+                
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+                inputNama.value = '';
+                inputDeskripsi.value = '';
+            } catch (error) {
+                console.error("Error:", error);
+                alert("Failed to create channel.");
+            } finally {
+                btnSimpan.disabled = false;
+                btnSimpan.innerText = "Save Channel";
+            }
+        });
+
+        // Mengambil dari kategori_en
+        const q = query(collection(db, "kategori_en"), orderBy("waktu", "desc"));
+        onSnapshot(q, (snapshot) => {
+            daftarKategori.innerHTML = ''; 
+            
+            snapshot.forEach((doc) => {
+                const data = doc.data();
+                // Membawa parameter lang=en
+                const htmlSaluran = `
+                    <a href="forum.html?lang=en&ruang=${data.slug}" class="p-5 bg-white border border-gray-200 rounded-2xl hover:border-blue-500 hover:shadow-md transition-all group cursor-pointer flex flex-col justify-between min-h-[140px]">
+                        <div>
+                            <h2 class="text-lg font-bold text-gray-800 group-hover:text-blue-600 mb-1 truncate"># ${data.nama}</h2>
+                            <p class="text-sm text-gray-500 line-clamp-2">${data.deskripsi || 'Community discussion room.'}</p>
+                        </div>
+                        <div class="mt-3 text-xs font-bold text-gray-300 group-hover:text-blue-500 flex items-center justify-between">
+                            <span>Join discussion</span>
+                            <span class="text-lg leading-none">→</span>
+                        </div>
+                    </a>
+                `;
+                daftarKategori.insertAdjacentHTML('beforeend', htmlSaluran);
+            });
+        });
+    </script>
+</body>
+</html>
