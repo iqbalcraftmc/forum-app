@@ -73,18 +73,14 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // ========================================================
-        // HAPUS KODE DI BAWAH INI DAN GANTI DENGAN FIREBASE CONFIG ANDA
-        // ========================================================
         const firebaseConfig = {
-  apiKey: "AIzaSyDlaaNbqCYsNDZtawY9n42qYrQL3vtyiRw",
-  authDomain: "forum-app-id.firebaseapp.com",
-  projectId: "forum-app-id",
-  storageBucket: "forum-app-id.firebasestorage.app",
-  messagingSenderId: "1006757478713",
-  appId: "1:1006757478713:web:c2b489ec6ff904ac4fa8e8"
-};
-        // ========================================================
+          apiKey: "AIzaSyDlaaNbqCYsNDZtawY9n42qYrQL3vtyiRw",
+          authDomain: "forum-app-id.firebaseapp.com",
+          projectId: "forum-app-id",
+          storageBucket: "forum-app-id.firebasestorage.app",
+          messagingSenderId: "1006757478713",
+          appId: "1:1006757478713:web:c2b489ec6ff904ac4fa8e8"
+        };
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
@@ -125,7 +121,7 @@
             btnSimpan.innerText = "Saving...";
 
             try {
-                // Simpan ke kategori_en (Versi Global)
+                // Simpan ke koleksi kategori_en
                 await addDoc(collection(db, "kategori_en"), {
                     nama: nama,
                     deskripsi: deskripsi || "Community discussion room.",
@@ -146,16 +142,21 @@
             }
         });
 
-        // Mengambil dari kategori_en
+        // Mengambil saluran dari koleksi kategori_en
         const q = query(collection(db, "kategori_en"), orderBy("waktu", "desc"));
         onSnapshot(q, (snapshot) => {
             daftarKategori.innerHTML = ''; 
             
+            if (snapshot.empty) {
+                daftarKategori.innerHTML = `<div class="col-span-1 text-gray-400 text-sm text-center py-4">No channels yet. Create one!</div>`;
+                return;
+            }
+
             snapshot.forEach((doc) => {
                 const data = doc.data();
-                // Membawa parameter lang=en
+                // Tautan mengarah langsung ke forum-global.html
                 const htmlSaluran = `
-                    <a href="forum.html?lang=en&ruang=${data.slug}" class="p-5 bg-white border border-gray-200 rounded-2xl hover:border-blue-500 hover:shadow-md transition-all group cursor-pointer flex flex-col justify-between min-h-[140px]">
+                    <a href="forum-global.html?ruang=${data.slug}" class="p-5 bg-white border border-gray-200 rounded-2xl hover:border-blue-500 hover:shadow-md transition-all group cursor-pointer flex flex-col justify-between min-h-[140px]">
                         <div>
                             <h2 class="text-lg font-bold text-gray-800 group-hover:text-blue-600 mb-1 truncate"># ${data.nama}</h2>
                             <p class="text-sm text-gray-500 line-clamp-2">${data.deskripsi || 'Community discussion room.'}</p>
