@@ -74,14 +74,13 @@
         import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
-          apiKey: "AIzaSyDlaaNbqCYsNDZtawY9n42qYrQL3vtyiRw",
-          authDomain: "forum-app-id.firebaseapp.com",
-          projectId: "forum-app-id",
-          storageBucket: "forum-app-id.firebasestorage.app",
-          messagingSenderId: "1006757478713",
-          appId: "1:1006757478713:web:c2b489ec6ff904ac4fa8e8"
-        };
-
+  apiKey: "AIzaSyDlaaNbqCYsNDZtawY9n42qYrQL3vtyiRw",
+  authDomain: "forum-app-id.firebaseapp.com",
+  projectId: "forum-app-id",
+  storageBucket: "forum-app-id.firebasestorage.app",
+  messagingSenderId: "1006757478713",
+  appId: "1:1006757478713:web:c2b489ec6ff904ac4fa8e8"
+};
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
