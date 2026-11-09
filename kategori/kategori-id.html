@@ -157,7 +157,7 @@
                 const data = doc.data();
                 // Mengarah langsung ke forum-id.html
                 const htmlSaluran = `
-                    <a href="forum-id.html?ruang=${data.slug}" class="p-5 bg-white border border-gray-200 rounded-2xl hover:border-red-500 hover:shadow-md transition-all group cursor-pointer flex flex-col justify-between min-h-[140px]">
+                    <a href="forum/forum-id.html?ruang=${data.slug}" class="p-5 bg-white border border-gray-200 rounded-2xl hover:border-red-500 hover:shadow-md transition-all group cursor-pointer flex flex-col justify-between min-h-[140px]">
                         <div>
                             <h2 class="text-lg font-bold text-gray-800 group-hover:text-red-600 mb-1 truncate"># ${data.nama}</h2>
                             <p class="text-sm text-gray-500 line-clamp-2">${data.deskripsi || 'Ruang obrolan komunitas.'}</p>
